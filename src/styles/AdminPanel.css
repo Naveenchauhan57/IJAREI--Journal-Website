@@ -493,6 +493,36 @@
   outline: none;
   box-shadow: var(--ap-shadow-medium), 0 0 0 3px rgba(160, 129, 108, 0.2);
 }
+
+.ap-assign-admin-btn {
+  background: var(--ap-accent-brown);
+  color: var(--ap-bg-primary);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--ap-transition-smooth);
+  box-shadow: var(--ap-shadow-light);
+}
+
+.ap-assign-admin-btn:hover {
+  background: #8a6b56;
+  box-shadow: var(--ap-shadow-medium);
+  transform: translateY(-1px);
+}
+
+.ap-assign-admin-btn:active {
+  transform: translateY(0);
+  box-shadow: var(--ap-shadow-light);
+}
+
+.ap-assign-admin-btn:focus {
+  outline: none;
+  box-shadow: var(--ap-shadow-medium), 0 0 0 3px rgba(160, 129, 108, 0.2);
+}
+
 /* Utility Classes */
 .ap-desktop-only {
   display: block;

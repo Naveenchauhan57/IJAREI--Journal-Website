@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/AdminLoginPage.css'; // Assuming you have a CSS file for styling  
 
 const AdminLoginPage = () => {
+  const navigate = useNavigate(); // This was imported but not used properly
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -9,7 +11,6 @@ const AdminLoginPage = () => {
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [timer, setTimer] = useState(0);
@@ -69,18 +70,6 @@ const AdminLoginPage = () => {
           throw new Error('Invalid admin credentials. Please check your email and password.');
         }
       
-      case '/api/admin/google-auth':
-        return { 
-          success: true, 
-          token: 'admin_google_token_456', 
-          user: { 
-            email: 'admin@gmail.com', 
-            name: 'Google Admin',
-            role: 'administrator',
-            permissions: ['read', 'write', 'manage_users']
-          } 
-        };
-      
       case '/api/admin/send-reset-otp':
         if (validateEmail(data.email)) {
           return { success: true, message: 'Admin password reset OTP sent successfully' };
@@ -123,7 +112,17 @@ const AdminLoginPage = () => {
       const response = await apiCall('/api/admin/login', { email, password });
       console.log('Admin login successful:', response);
       
-      setIsAuthenticated(true);
+      // Store authentication data in localStorage
+      localStorage.setItem('adminToken', response.token);
+      localStorage.setItem('adminSession', JSON.stringify({
+        loginTime: new Date().getTime(),
+        user: response.user
+      }));
+      localStorage.setItem('isAdminLoggedIn', 'true');
+      
+      // Navigate to admin dashboard
+      navigate('/admin/dashboard');
+      
     } catch (error) {
       setErrors({ general: error.message });
     } finally {
@@ -131,19 +130,7 @@ const AdminLoginPage = () => {
     }
   };
 
-  const handleAdminGoogleLogin = async () => {
-    setLoading(true);
-    
-    try {
-      const response = await apiCall('/api/admin/google-auth', {});
-      console.log('Admin Google login successful:', response);
-      setIsAuthenticated(true);
-    } catch (error) {
-      setErrors({ general: error.message });
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   const handleSendAdminOTP = async () => {
     setErrors({});
@@ -224,64 +211,8 @@ const AdminLoginPage = () => {
     }
   };
 
-  const handleAdminLogout = () => {
-    setIsAuthenticated(false);
-    setEmail('');
-    setPassword('');
-    setErrors({});
-  };
-
-  // Render authenticated admin dashboard
-  if (isAuthenticated) {
-    return (
-      <div className="admin-dashboard-container-xyz123">
-        <div className="admin-dashboard-card-abc789">
-          <h2 className="admin-dashboard-title-def456">Admin Dashboard</h2>
-          
-          <div className="admin-welcome-section-ghi321">
-            <h3 className="admin-welcome-heading-jkl654">Welcome to Admin Panel!</h3>
-            <p className="admin-user-info-mno987">
-              You are successfully logged in as Administrator: <strong>{email}</strong>
-            </p>
-          </div>
-          
-          <div className="admin-stats-container-pqr135">
-            <div className="admin-stats-card-stu246">
-              <h4 className="admin-stats-heading-vwx357">Admin Quick Stats</h4>
-              <p className="admin-last-login-yzab468">
-                Last admin login: {new Date().toLocaleDateString()}
-              </p>
-              <p className="admin-role-info-cdef579">
-                Role: Administrator
-              </p>
-            </div>
-            
-            <div className="admin-actions-card-ghij680">
-              <h4 className="admin-actions-heading-klmn791">Quick Actions</h4>
-              <div className="admin-action-buttons-opqr802">
-                <button className="admin-action-btn-users-stuv913">
-                  Manage Users
-                </button>
-                <button className="admin-action-btn-settings-wxyz024">
-                  System Settings
-                </button>
-                <button className="admin-action-btn-reports-abcd135">
-                  View Reports
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <button 
-            className="admin-logout-button-efgh246"
-            onClick={handleAdminLogout}
-          >
-            Admin Logout
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // REMOVED the entire authenticated dashboard render section
+  // Now this component only handles login, not the dashboard
 
   return (
     <div className="admin-login-main-container-ijkl357">
@@ -304,19 +235,6 @@ const AdminLoginPage = () => {
 
         {!showForgotPassword ? (
           <div className="admin-login-form-section-cdef802">
-            <button 
-              type="button"
-              className="admin-google-login-btn-ghij913"
-              onClick={handleAdminGoogleLogin}
-              disabled={loading}
-            >
-              {loading ? 'Authenticating Admin...' : 'Continue with Google (Admin)'}
-            </button>
-
-            <div className="admin-divider-section-klmn024">
-              <div className="admin-divider-line-opqr135"></div>
-              <span className="admin-divider-text-stuv246">or login with admin credentials</span>
-            </div>
 
             <div className="admin-email-input-group-wxyz357">
               <label className="admin-email-label-abcd468">Admin Email Address</label>

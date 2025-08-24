@@ -11,11 +11,12 @@ import {
     MessageCircle,
     Bell,
     PlusIcon,
-    ChevronRight
+    ChevronRight,
+    Settings
 } from 'lucide-react';
 import '../styles/AdminPanel.css';
 
-// Import the ArticleUploadForm component
+// Import existing components
 import ArticleUploadForm from '../adminpanel/ArticleUploadForm';
 import EditorialBoardManagement from '../adminpanel/EditorialBoardManagement';
 import IndexingManagement from '../adminpanel/IndexingManagement';
@@ -23,6 +24,12 @@ import Dashboard from '../adminpanel/Dashboard';
 import AllArticles from '../adminpanel/AllArticles';
 import EnquiriesManagement from '../adminpanel/EnquiriesManagement';
 import Volumeissue from '../adminpanel/Volumeissue';
+import Assignadmin from '../adminpanel/Assignadmin'; 
+
+// Import enquiry-specific components
+import Contactpageenquiries from '../adminpanel/Contactpageenquiries';
+import ManuscriptSubmissions from '../adminpanel/ManuscriptSubmissions';
+import EditorialApplications from '../adminpanel/EditorialApplications';
 
 const AdminPanel = () => {
     const navigate = useNavigate();
@@ -30,6 +37,9 @@ const AdminPanel = () => {
     const [activeSection, setActiveSection] = useState('dashboard');
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [notificationCount, setNotificationCount] = useState(0);
+
+    // State to track which enquiry type is active
+    const [activeEnquiryType, setActiveEnquiryType] = useState(null);
 
     const updateNotificationCount = (count) => {
         setNotificationCount(count);
@@ -42,6 +52,12 @@ const AdminPanel = () => {
         navigate('/admin-login');
     };
 
+    const handleAssignAdmin = () => {
+        // Navigate to assign-admin section within the admin panel
+        setActiveSection('assign-admin');
+        setMobileMenuOpen(false);
+    };
+
     const navigationItems = [
         { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
         { id: 'volume-issues', label: 'Volume & Issues', icon: PlusIcon },
@@ -49,7 +65,8 @@ const AdminPanel = () => {
         { id: 'editorial-board-management', label: 'Editorial Board Management', icon: Users },
         { id: 'indexing', label: 'Indexing Management', icon: Bookmark },
         { id: 'all-articles', label: 'All Articles', icon: Archive },
-        { id: 'enquiries', label: 'Enquiries Management', icon: MessageCircle }
+        { id: 'enquiries', label: 'Enquiries Management', icon: MessageCircle },
+        { id: 'assign-admin', label: 'Admin Management', icon: Settings }
     ];
 
     const toggleSidebar = () => {
@@ -62,10 +79,36 @@ const AdminPanel = () => {
 
     const handleSectionChange = (sectionId) => {
         setActiveSection(sectionId);
+        setActiveEnquiryType(null); // Reset enquiry type when switching sections
         setMobileMenuOpen(false);
     };
 
+    // Function to handle enquiry type navigation
+    const handleEnquiryNavigation = (enquiryType) => {
+        setActiveSection('enquiries');
+        setActiveEnquiryType(enquiryType);
+        setMobileMenuOpen(false);
+    };
+
+    // Function to go back to main enquiries page
+    const handleBackToEnquiries = () => {
+        setActiveEnquiryType(null);
+    };
+
     const getCurrentSectionLabel = () => {
+        if (activeSection === 'enquiries' && activeEnquiryType) {
+            switch (activeEnquiryType) {
+                case 'contact':
+                    return 'Contact Page Enquiries';
+                case 'editorial':
+                    return 'Editorial Applications';
+                case 'manuscripts':
+                    return 'Manuscript Submissions';
+                default:
+                    return 'Enquiries Management';
+            }
+        }
+
         const currentItem = navigationItems.find(item => item.id === activeSection);
         return currentItem ? currentItem.label : 'Dashboard';
     };
@@ -75,7 +118,7 @@ const AdminPanel = () => {
         switch (activeSection) {
             case 'dashboard':
                 return <Dashboard onNavigate={handleSectionChange} />;
-                
+
             case 'volume-issues':
                 return <Volumeissue />;
 
@@ -90,9 +133,29 @@ const AdminPanel = () => {
 
             case 'all-articles':
                 return <AllArticles />;
-            case 'enquiries':
-                return <EnquiriesManagement updateNotificationCount={updateNotificationCount} />;
 
+            case 'assign-admin':
+                return <Assignadmin />;
+
+            case 'enquiries':
+                switch (activeEnquiryType) {
+                    case 'contact':
+                        return <Contactpageenquiries onBack={handleBackToEnquiries} />;
+
+                    case 'editorial':
+                        return <EditorialApplications onBack={handleBackToEnquiries} />;
+
+                    case 'manuscripts':
+                        return <ManuscriptSubmissions onBack={handleBackToEnquiries} />;
+
+                    default:
+                        return (
+                            <EnquiriesManagement
+                                updateNotificationCount={updateNotificationCount}
+                                onNavigateToEnquiry={handleEnquiryNavigation}
+                            />
+                        );
+                }
 
             default:
                 return (
@@ -132,11 +195,17 @@ const AdminPanel = () => {
                         <span className="ap-notification-badge">{notificationCount}</span>
                     </button>
 
-                    <button 
+                    <button
                         className="ap-logout-btn"
                         onClick={handleLogout}
                     >
                         Logout
+                    </button>
+                    <button
+                        className="ap-assign-admin-btn"
+                        onClick={handleAssignAdmin}
+                    >
+                        Assign Admin
                     </button>
                 </div>
             </header>
@@ -186,19 +255,52 @@ const AdminPanel = () => {
 
             {/* Main Content */}
             <main className={`ap-main-content ${sidebarCollapsed ? 'ap-sidebar-collapsed' : ''}`}>
-                {/* Only show header for non-article-upload sections */}
-                {!['article-upload', 'editorial-board-management'].includes(activeSection) && (
+                {/* Show header for most sections, but handle enquiry sub-pages and assign-admin */}
+                {!['article-upload', 'editorial-board-management', 'assign-admin'].includes(activeSection) && (
                     <div className="ap-content-header">
-                        <h2 className="ap-content-title">{getCurrentSectionLabel()}</h2>
+                        <h2 className="ap-content-title">
+                            {getCurrentSectionLabel()}
+                            {/* Show back button for enquiry sub-pages */}
+                            {activeSection === 'enquiries' && activeEnquiryType && (
+                                <button
+                                    className="ap-back-button"
+                                    onClick={handleBackToEnquiries}
+                                    style={{
+                                        marginLeft: '20px',
+                                        fontSize: '16px',
+                                        fontWeight: '500',
+                                        color: 'var(--ap-accent-brown)',
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '5px'
+                                    }}
+                                >
+                                    ← Back to Enquiries
+                                </button>
+                            )}
+                        </h2>
                         <div className="ap-breadcrumb">
                             <span>Admin Panel</span>
                             <ChevronRight size={14} />
                             <span>{getCurrentSectionLabel()}</span>
+                            {activeEnquiryType && (
+                                <>
+                                    <ChevronRight size={14} />
+                                    <span>
+                                        {activeEnquiryType === 'contact' && 'Contact Page Enquiries'}
+                                        {activeEnquiryType === 'editorial' && 'Editorial Applications'}
+                                        {activeEnquiryType === 'manuscripts' && 'Manuscript Submissions'}
+                                    </span>
+                                </>
+                            )}
                         </div>
                     </div>
                 )}
 
-                <div className={`ap-content-body ${['article-upload', 'editorial-board-management'].includes(activeSection) ? 'ap-no-padding' : ''}`}>
+                <div className={`ap-content-body ${['article-upload', 'editorial-board-management', 'assign-admin'].includes(activeSection) ? 'ap-no-padding' : ''}`}>
                     {renderContent()}
                 </div>
             </main>

@@ -70,7 +70,6 @@
 /* Main Container */
 .idx-mgmt-container {
   min-height: 100vh;
-  background-color: var(--idx-bg-secondary);
   padding: var(--idx-spacing-lg) var(--idx-spacing-xl);
   font-family: var(--idx-font-family);
   color: var(--idx-text-primary);
@@ -1044,23 +1043,5 @@
   .idx-mgmt-empty-state {
     padding: var(--idx-spacing-xl) var(--idx-spacing-lg);
     min-height: 300px;
-  }
-}
-
-/* Dark Mode Support (Optional) */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --idx-bg-primary: #1a1918;
-    --idx-bg-secondary: #222120;
-    --idx-bg-tertiary: #2a2826;
-    
-    --idx-text-primary: #f5f4f1;
-    --idx-text-secondary: #d4d0c8;
-    --idx-text-muted: #a8a399;
-    --idx-text-placeholder: #8a8580;
-    
-    --idx-border-light: #2a2826;
-    --idx-border-medium: #3a3632;
-    --idx-border-dark: #4a453e;
   }
 }

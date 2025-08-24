@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import '../styles/ALLAdminArticlesPanel.css'
-import { 
-  Search, 
-  Filter, 
-  Eye, 
-  Edit, 
-  Trash2, 
-  Download, 
+import {
+  Search,
+  Filter,
+  Eye,
+  Edit,
+  Trash2,
+  Download,
   Plus,
   Calendar,
   User,
@@ -18,7 +18,9 @@ import {
   BookOpen,
   Globe,
   Tag,
-  Hash
+  Hash,
+  X,
+  Save
 } from 'lucide-react';
 
 // Mock API service - replace with actual API calls
@@ -26,7 +28,7 @@ const ArticleService = {
   async fetchArticles(params = {}) {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     // Mock data - only published articles
     const mockArticles = [
       {
@@ -81,10 +83,10 @@ const ArticleService = {
 
     // Simulate filtering and pagination
     let filteredArticles = [...mockArticles];
-    
+
     if (params.search) {
       const searchTerm = params.search.toLowerCase();
-      filteredArticles = filteredArticles.filter(article => 
+      filteredArticles = filteredArticles.filter(article =>
         article.title.toLowerCase().includes(searchTerm) ||
         article.authorName.toLowerCase().includes(searchTerm) ||
         article.subject.toLowerCase().includes(searchTerm) ||
@@ -130,6 +132,11 @@ const ArticleService = {
     link.download = `article_${id}.pdf`;
     link.click();
     return { success: true };
+  },
+
+  async updateArticle(id, updatedData) {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return { success: true, message: 'Article updated successfully' };
   }
 };
 
@@ -140,6 +147,12 @@ const AdminArticlesPanel = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedArticles, setSelectedArticles] = useState(new Set());
   const [showFilters, setShowFilters] = useState(false);
+
+  // Modal states
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [editingArticle, setEditingArticle] = useState(null);
 
   // Filter and search state
   const [filters, setFilters] = useState({
@@ -160,15 +173,15 @@ const AdminArticlesPanel = () => {
   const loadArticles = async (newFilters = {}) => {
     try {
       setLoading(true);
-      const params = { 
-        ...filters, 
+      const params = {
+        ...filters,
         ...newFilters,
         page: pagination.page,
-        limit: pagination.limit 
+        limit: pagination.limit
       };
-      
+
       const response = await ArticleService.fetchArticles(params);
-      
+
       setArticles(response.articles);
       setPagination({
         ...pagination,
@@ -222,6 +235,38 @@ const AdminArticlesPanel = () => {
     setSelectedArticles(newSelected);
   };
 
+  // View handler - opens modal with article details
+  const handleView = (article) => {
+    setSelectedArticle(article);
+    setViewModalOpen(true);
+  };
+
+  // Edit handler - opens modal with editable form
+  const handleEdit = (articleId) => {
+    const article = articles.find(a => a.id === articleId);
+    setEditingArticle({ ...article });
+    setEditModalOpen(true);
+  };
+
+  // Save edited article
+  const handleSaveEdit = async () => {
+    try {
+      await ArticleService.updateArticle(editingArticle.id, editingArticle);
+
+      // Update local state
+      setArticles(articles.map(article =>
+        article.id === editingArticle.id ? editingArticle : article
+      ));
+
+      setEditModalOpen(false);
+      setEditingArticle(null);
+      // Show success notification
+    } catch (error) {
+      console.error('Error updating article:', error);
+      // Show error notification
+    }
+  };
+
   // Delete handler
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this article?')) {
@@ -245,6 +290,25 @@ const AdminArticlesPanel = () => {
       console.error('Error downloading article:', error);
       // Show error notification
     }
+  };
+
+  // Close modals
+  const closeViewModal = () => {
+    setViewModalOpen(false);
+    setSelectedArticle(null);
+  };
+
+  const closeEditModal = () => {
+    setEditModalOpen(false);
+    setEditingArticle(null);
+  };
+
+  // Handle edit form changes
+  const handleEditChange = (field, value) => {
+    setEditingArticle(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   // Pagination handlers
@@ -272,7 +336,7 @@ const AdminArticlesPanel = () => {
   // Memoized filter options
   const filterOptions = useMemo(() => {
     const years = [...new Set(articles.map(a => a.year))];
-    
+
     return { years };
   }, [articles]);
 
@@ -292,7 +356,7 @@ const AdminArticlesPanel = () => {
           </div>
         </div>
         <div className="aap-header-right">
-          <button 
+          <button
             className="aap-btn aap-btn-secondary"
             onClick={handleRefresh}
             disabled={refreshing}
@@ -332,16 +396,16 @@ const AdminArticlesPanel = () => {
             className="aap-search-input"
           />
         </div>
-        
+
         <div className="aap-filter-controls">
-          <button 
+          <button
             className={`aap-btn aap-btn-outline ${showFilters ? 'aap-active' : ''}`}
             onClick={() => setShowFilters(!showFilters)}
           >
             <Filter size={16} />
             Filters
           </button>
-          
+
           {selectedArticles.size > 0 && (
             <div className="aap-bulk-actions">
               <span className="aap-selected-count">
@@ -373,7 +437,7 @@ const AdminArticlesPanel = () => {
                 ))}
               </select>
             </div>
-            
+
             <div className="aap-filter-item">
               <label className="aap-filter-label">Special Issue</label>
               <select
@@ -428,7 +492,7 @@ const AdminArticlesPanel = () => {
                       className="aap-checkbox"
                     />
                   </td>
-                  
+
                   <td className="aap-td">
                     <div className="aap-article-info">
                       <h3 className="aap-article-title">{article.title}</h3>
@@ -451,7 +515,7 @@ const AdminArticlesPanel = () => {
                       </div>
                     </div>
                   </td>
-                  
+
                   <td className="aap-td">
                     <div className="aap-author-info">
                       <div className="aap-author-name">{article.authorName}</div>
@@ -461,7 +525,7 @@ const AdminArticlesPanel = () => {
                       </div>
                     </div>
                   </td>
-                  
+
                   <td className="aap-td">
                     <div className="aap-publication-info">
                       <div className="aap-pub-item">
@@ -477,7 +541,7 @@ const AdminArticlesPanel = () => {
                       <div className="aap-pub-subject">{article.subject}</div>
                     </div>
                   </td>
-                  
+
                   <td className="aap-td">
                     <StatusBadge status={article.status} />
                     {article.publishDate && (
@@ -487,7 +551,7 @@ const AdminArticlesPanel = () => {
                       </div>
                     )}
                   </td>
-                  
+
                   <td className="aap-td">
                     <div className="aap-stats">
                       <div className="aap-stat-item">
@@ -500,7 +564,7 @@ const AdminArticlesPanel = () => {
                       </div>
                     </div>
                   </td>
-                  
+
                   <td className="aap-td">
                     <div className="aap-actions">
                       <button
@@ -510,21 +574,23 @@ const AdminArticlesPanel = () => {
                       >
                         <Download size={16} />
                       </button>
-                      
+
                       <button
                         className="aap-action-btn aap-action-btn-secondary"
+                        onClick={() => handleView(article)}
                         title="View Details"
                       >
                         <Eye size={16} />
                       </button>
-                      
+
                       <button
                         className="aap-action-btn aap-action-btn-secondary"
+                        onClick={() => handleEdit(article.id)}
                         title="Edit Article"
                       >
                         <Edit size={16} />
                       </button>
-                      
+
                       <button
                         className="aap-action-btn aap-action-btn-danger"
                         onClick={() => handleDelete(article.id)}
@@ -555,7 +621,7 @@ const AdminArticlesPanel = () => {
           <div className="aap-pagination-info">
             Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} articles
           </div>
-          
+
           <div className="aap-pagination-controls">
             <button
               className="aap-pagination-btn"
@@ -565,7 +631,7 @@ const AdminArticlesPanel = () => {
               <ChevronLeft size={16} />
               Previous
             </button>
-            
+
             <div className="aap-pagination-numbers">
               {[...Array(Math.min(5, pagination.totalPages))].map((_, index) => {
                 const pageNum = Math.max(1, pagination.page - 2) + index;
@@ -573,9 +639,8 @@ const AdminArticlesPanel = () => {
                   return (
                     <button
                       key={pageNum}
-                      className={`aap-pagination-number ${
-                        pageNum === pagination.page ? 'aap-active' : ''
-                      }`}
+                      className={`aap-pagination-number ${pageNum === pagination.page ? 'aap-active' : ''
+                        }`}
                       onClick={() => handlePageChange(pageNum)}
                     >
                       {pageNum}
@@ -585,7 +650,7 @@ const AdminArticlesPanel = () => {
                 return null;
               })}
             </div>
-            
+
             <button
               className="aap-pagination-btn"
               onClick={() => handlePageChange(pagination.page + 1)}
@@ -594,6 +659,289 @@ const AdminArticlesPanel = () => {
               Next
               <ChevronRight size={16} />
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* View Modal */}
+      {viewModalOpen && selectedArticle && (
+        <div className="aap-modal-overlay" onClick={closeViewModal}>
+          <div className="aap-modal aap-modal-large" onClick={e => e.stopPropagation()}>
+            <div className="aap-modal-header">
+              <h2 className="aap-modal-title">Article Details</h2>
+              <button
+                className="aap-modal-close"
+                onClick={closeViewModal}
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="aap-modal-body">
+              <div className="aap-article-details">
+                <div className="aap-detail-section">
+                  <h3 className="aap-detail-heading">Basic Information</h3>
+                  <div className="aap-detail-grid">
+                    <div className="aap-detail-item">
+                      <label>Article ID:</label>
+                      <span>{selectedArticle.id}</span>
+                    </div>
+                    <div className="aap-detail-item">
+                      <label>Title:</label>
+                      <span>{selectedArticle.title}</span>
+                    </div>
+                    <div className="aap-detail-item">
+                      <label>Author:</label>
+                      <span>{selectedArticle.authorName}</span>
+                    </div>
+                    <div className="aap-detail-item">
+                      <label>Subject:</label>
+                      <span>{selectedArticle.subject}</span>
+                    </div>
+                    <div className="aap-detail-item">
+                      <label>Country:</label>
+                      <span>{selectedArticle.country}</span>
+                    </div>
+                    <div className="aap-detail-item">
+                      <label>DOI:</label>
+                      <span>{selectedArticle.doi}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="aap-detail-section">
+                  <h3 className="aap-detail-heading">Publication Details</h3>
+                  <div className="aap-detail-grid">
+                    <div className="aap-detail-item">
+                      <label>Volume:</label>
+                      <span>{selectedArticle.volume}</span>
+                    </div>
+                    <div className="aap-detail-item">
+                      <label>Issue:</label>
+                      <span>{selectedArticle.issue}</span>
+                    </div>
+                    <div className="aap-detail-item">
+                      <label>Pages:</label>
+                      <span>{selectedArticle.pageNo}</span>
+                    </div>
+                    <div className="aap-detail-item">
+                      <label>Month/Year:</label>
+                      <span>{selectedArticle.month} {selectedArticle.year}</span>
+                    </div>
+                    <div className="aap-detail-item">
+                      <label>Special Issue:</label>
+                      <span>{selectedArticle.specialIssue ? 'Yes' : 'No'}</span>
+                    </div>
+                    <div className="aap-detail-item">
+                      <label>Reference No:</label>
+                      <span>{selectedArticle.referenceNo}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="aap-detail-section">
+                  <h3 className="aap-detail-heading">Abstract</h3>
+                  <p className="aap-abstract-full">{selectedArticle.abstract}</p>
+                </div>
+
+                <div className="aap-detail-section">
+                  <h3 className="aap-detail-heading">Keywords</h3>
+                  <p>{selectedArticle.keywords}</p>
+                </div>
+
+                <div className="aap-detail-section">
+                  <h3 className="aap-detail-heading">Statistics</h3>
+                  <div className="aap-detail-grid">
+                    <div className="aap-detail-item">
+                      <label>File Size:</label>
+                      <span>{selectedArticle.fileSize}</span>
+                    </div>
+                    <div className="aap-detail-item">
+                      <label>Downloads:</label>
+                      <span>{selectedArticle.downloadCount}</span>
+                    </div>
+                    <div className="aap-detail-item">
+                      <label>Status:</label>
+                      <span>{selectedArticle.status}</span>
+                    </div>
+                    <div className="aap-detail-item">
+                      <label>Published:</label>
+                      <span>{new Date(selectedArticle.publishDate).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editModalOpen && editingArticle && (
+        <div className="aap-modal-overlay" onClick={closeEditModal}>
+          <div className="aap-modal aap-modal-large" onClick={e => e.stopPropagation()}>
+            <div className="aap-modal-header">
+              <h2 className="aap-modal-title">Edit Article</h2>
+              <button
+                className="aap-modal-close"
+                onClick={closeEditModal}
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="aap-modal-body">
+              <form className="aap-edit-form">
+                <div className="aap-form-section">
+                  <h3 className="aap-form-heading">Basic Information</h3>
+                  <div className="aap-form-grid">
+                    <div className="aap-form-item">
+                      <label className="aap-form-label">Title</label>
+                      <input
+                        type="text"
+                        value={editingArticle.title}
+                        onChange={(e) => handleEditChange('title', e.target.value)}
+                        className="aap-form-input"
+                      />
+                    </div>
+                    <div className="aap-form-item">
+                      <label className="aap-form-label">Author Name</label>
+                      <input
+                        type="text"
+                        value={editingArticle.authorName}
+                        onChange={(e) => handleEditChange('authorName', e.target.value)}
+                        className="aap-form-input"
+                      />
+                    </div>
+                    <div className="aap-form-item">
+                      <label className="aap-form-label">Subject</label>
+                      <input
+                        type="text"
+                        value={editingArticle.subject}
+                        onChange={(e) => handleEditChange('subject', e.target.value)}
+                        className="aap-form-input"
+                      />
+                    </div>
+                    <div className="aap-form-item">
+                      <label className="aap-form-label">Country</label>
+                      <input
+                        type="text"
+                        value={editingArticle.country}
+                        onChange={(e) => handleEditChange('country', e.target.value)}
+                        className="aap-form-input"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="aap-form-section">
+                  <h3 className="aap-form-heading">Publication Details</h3>
+                  <div className="aap-form-grid">
+                    <div className="aap-form-item">
+                      <label className="aap-form-label">Volume</label>
+                      <input
+                        type="text"
+                        value={editingArticle.volume}
+                        onChange={(e) => handleEditChange('volume', e.target.value)}
+                        className="aap-form-input"
+                      />
+                    </div>
+                    <div className="aap-form-item">
+                      <label className="aap-form-label">Issue</label>
+                      <input
+                        type="text"
+                        value={editingArticle.issue}
+                        onChange={(e) => handleEditChange('issue', e.target.value)}
+                        className="aap-form-input"
+                      />
+                    </div>
+                    <div className="aap-form-item">
+                      <label className="aap-form-label">Pages</label>
+                      <input
+                        type="text"
+                        value={editingArticle.pageNo}
+                        onChange={(e) => handleEditChange('pageNo', e.target.value)}
+                        className="aap-form-input"
+                      />
+                    </div>
+                    <div className="aap-form-item">
+                      <label className="aap-form-label">Month</label>
+                      <input
+                        type="text"
+                        value={editingArticle.month}
+                        onChange={(e) => handleEditChange('month', e.target.value)}
+                        className="aap-form-input"
+                      />
+                    </div>
+                    <div className="aap-form-item">
+                      <label className="aap-form-label">Year</label>
+                      <input
+                        type="text"
+                        value={editingArticle.year}
+                        onChange={(e) => handleEditChange('year', e.target.value)}
+                        className="aap-form-input"
+                      />
+                    </div>
+                    <div className="aap-form-item">
+                      <label className="aap-form-label">DOI</label>
+                      <input
+                        type="text"
+                        value={editingArticle.doi}
+                        onChange={(e) => handleEditChange('doi', e.target.value)}
+                        className="aap-form-input"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="aap-form-section">
+                  <h3 className="aap-form-heading">Abstract</h3>
+                  <textarea
+                    value={editingArticle.abstract}
+                    onChange={(e) => handleEditChange('abstract', e.target.value)}
+                    className="aap-form-textarea"
+                    rows="4"
+                  />
+                </div>
+
+                <div className="aap-form-section">
+                  <h3 className="aap-form-heading">Keywords</h3>
+                  <input
+                    type="text"
+                    value={editingArticle.keywords}
+                    onChange={(e) => handleEditChange('keywords', e.target.value)}
+                    className="aap-form-input"
+                    placeholder="Separate keywords with commas"
+                  />
+                </div>
+
+                <div className="aap-form-section">
+                  <h3 className="aap-form-heading">Settings</h3>
+                  <div className="aap-detail-item">
+                    <label>Special Issue Status:</label>
+                    <span className={editingArticle.specialIssue ? 'aap-special-indicator' : ''}>
+                      {editingArticle.specialIssue ? '✓ Special Issue Article' : 'Regular Article'}
+                    </span>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            <div className="aap-modal-footer">
+              <button
+                className="aap-btn aap-btn-secondary"
+                onClick={closeEditModal}
+              >
+                Cancel
+              </button>
+              <button
+                className="aap-btn aap-btn-primary"
+                onClick={handleSaveEdit}
+              >
+                <Save size={16} />
+                Save Changes
+              </button>
+            </div>
           </div>
         </div>
       )}

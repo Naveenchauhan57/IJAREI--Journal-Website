@@ -467,27 +467,6 @@
     animation: none;
   }
 }
-
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background-light: #0f172a;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --white: #1e293b;
-  }
-  
-  .editorialBoard-memberCard {
-    background: #1e293b;
-    border-color: #334155;
-  }
-  
-  .editorialBoard-categorySection {
-    background: #1e293b;
-    border-color: rgba(34, 197, 94, 0.2);
-  }
-}
-
 /* Ultra-wide screens */
 @media (min-width: 1400px) {
   .editorialBoard-main {

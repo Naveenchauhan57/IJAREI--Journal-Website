@@ -674,35 +674,6 @@ contactUs-headerSubtitle {
   }
 }
 
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --gray-50: #111827;
-    --gray-100: #1f2937;
-    --gray-200: #374151;
-    --gray-300: #4b5563;
-    --gray-500: #9ca3af;
-    --gray-700: #e5e7eb;
-    --gray-900: #f9fafb;
-    --white: #1f2937;
-  }
-
-  .contactUs-container{
-    background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%);
-  }
-
-  .contactUs-formCard {
-    background: var(--white);
-    border-color: var(--gray-200);
-  }
-
-  .input,
-  .contactUs-textarea {
-    background: var(--gray-100);
-    color: var(--gray-900);
-  }
-}
-
 /* Print Styles */
 @media print {
   .contactUs-header  {
